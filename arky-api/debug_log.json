@@ -1,0 +1,28 @@
+{
+  "status": "success",
+  "message": "Success",
+  "data": {
+    "presupuesto": {
+      "id": 19,
+      "obra_id": 9,
+      "version_numero": 2,
+      "estado": "Borrador",
+      "notas_generales": null,
+      "fecha_creacion": "2025-11-21T17:13:19.809Z"
+    },
+    "rubros": [
+      {
+        "id": 9,
+        "descripcion": "Rubro Test Updated",
+        "unidad_medida": "m2",
+        "cantidad_estimada": "15.00",
+        "costo_unitario": "55000.00",
+        "fecha_inicio_estimada": null,
+        "fecha_fin_estimada": null,
+        "observaciones": null,
+        "avance_estado": "No Iniciado",
+        "porcentaje_avance": "0.00"
+      }
+    ]
+  }
+}

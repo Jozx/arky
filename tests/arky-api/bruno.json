@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "name": "arky-api",
+  "type": "collection",
+  "testRuntime": "modern",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

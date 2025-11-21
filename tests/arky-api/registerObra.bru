@@ -1,0 +1,24 @@
+meta {
+  name: registerObra
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:3001/api/obras
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sIjoiQXJxdWl0ZWN0byIsImlhdCI6MTc2MzY0MzQ4MywiZXhwIjoxNzYzNzI5ODgzfQ.ZaMM2QTCG0iQ41cfQZXMnUm4VuLN49nVpboTXGK0_Kk
+}
+
+body:json {
+  {"nombre": "Residencial Central Park", "direccion": "Av. Libertador 45", "cliente_email": "client@home.com", "fecha_inicio_estimada": "2025-11-01"}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,20 @@
+meta {
+  name: registerPresupuesto
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:3001/api/obras/1/presupuestos
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sIjoiQXJxdWl0ZWN0byIsImlhdCI6MTc2MzY0MzQ4MywiZXhwIjoxNzYzNzI5ODgzfQ.ZaMM2QTCG0iQ41cfQZXMnUm4VuLN49nVpboTXGK0_Kk
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

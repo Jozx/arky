@@ -1,0 +1,14 @@
+{
+  "status": "success",
+  "message": "Success",
+  "data": {
+    "id": 9,
+    "nombre": "Obra Test 1763745199691",
+    "direccion": "123 Test St",
+    "arquitecto_id": 31,
+    "cliente_id": 32,
+    "fecha_inicio_estimada": "2025-11-21T03:00:00.000Z",
+    "fecha_fin_estimada": null,
+    "status": "Activa"
+  }
+}

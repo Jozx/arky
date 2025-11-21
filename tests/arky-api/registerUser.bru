@@ -1,0 +1,24 @@
+meta {
+  name: registerUser
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:3001/api/users/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {"email": "arq@studio.com", "password": "pass123", "nombre": "Arq Principal", "rol": "Arquitecto"}
+}
+
+tests {
+  tests.setEnvironmentVariable("arquiToken", res.json().token);
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
