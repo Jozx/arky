@@ -42,6 +42,9 @@ run_migration.js
 check_enum.sql
 arky-api/verify_workflow.js
 
+# Tests
+tests/
+
 # Test coverage
 coverage/
 .nyc_output/
