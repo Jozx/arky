@@ -48,3 +48,4 @@ tests/
 # Test coverage
 coverage/
 .nyc_output/
+PAYMENT_TAB_INTEGRATION_GUIDE.md

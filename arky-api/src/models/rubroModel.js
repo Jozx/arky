@@ -1,12 +1,8 @@
-// arky-api/src/models/rubroModel.js
 const db = require('../config/db');
 
 /**
- * Crea un nuevo rubro dentro de un presupuesto específico.
- * También inicializa su entrada en la tabla TrackingAvance.
- * @param {number} presupuestoId - ID del presupuesto al que pertenece.
- * @param {object} data - Datos del rubro (descripcion, cantidad, costo, etc.).
- * @returns {object} El rubro creado.
+ * @param { object } data - Datos del rubro(descripcion, cantidad, costo, etc.).
+ * @returns { object } El rubro creado.
  */
 async function create(presupuestoId, data) {
     const {
@@ -20,13 +16,13 @@ async function create(presupuestoId, data) {
 
     // 1. Inserción del Rubro
     const rubroQuery = `
-        INSERT INTO Rubro (
-            presupuesto_id, descripcion, unidad_medida, cantidad_estimada, costo_unitario,
-            fecha_inicio_estimada, fecha_fin_estimada
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO Rubro(
+        presupuesto_id, descripcion, unidad_medida, cantidad_estimada, costo_unitario,
+        fecha_inicio_estimada, fecha_fin_estimada
+    )
+    VALUES($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, descripcion, unidad_medida, cantidad_estimada, costo_unitario,
-                  fecha_inicio_estimada, fecha_fin_estimada;
+        fecha_inicio_estimada, fecha_fin_estimada;
     `;
     const rubroValues = [
         presupuestoId,
@@ -59,10 +55,10 @@ async function create(presupuestoId, data) {
 async function findById(rubroId) {
     const query = `
         SELECT r.id, r.presupuesto_id, r.descripcion, r.unidad_medida, r.cantidad_estimada, r.costo_unitario,
-               r.fecha_inicio_estimada, r.fecha_fin_estimada,
-               ta.estado AS avance_estado, 
-               ta.porcentaje_avance,
-               ta.fecha_actualizacion AS avance_fecha_actualizacion
+        r.fecha_inicio_estimada, r.fecha_fin_estimada,
+        ta.estado AS avance_estado,
+            ta.porcentaje_avance,
+            ta.fecha_actualizacion AS avance_fecha_actualizacion
         FROM Rubro r
         LEFT JOIN TrackingAvance ta ON r.id = ta.rubro_id
         WHERE r.id = $1;
@@ -81,9 +77,9 @@ async function findById(rubroId) {
 async function updateAvance(rubroId, estado, porcentajeAvance) {
     const query = `
         UPDATE TrackingAvance
-        SET estado = $2, 
-            porcentaje_avance = $3,
-            fecha_actualizacion = CURRENT_TIMESTAMP
+        SET estado = $2,
+        porcentaje_avance = $3,
+        fecha_actualizacion = CURRENT_TIMESTAMP
         WHERE rubro_id = $1
         RETURNING rubro_id, estado, porcentaje_avance, fecha_actualizacion;
     `;
@@ -126,12 +122,22 @@ async function update(rubroId, data) {
     const query = `
         UPDATE Rubro
         SET descripcion = COALESCE($2, descripcion),
-            cantidad_estimada = COALESCE($3, cantidad_estimada),
-            costo_unitario = COALESCE($4, costo_unitario)
+        cantidad_estimada = COALESCE($3, cantidad_estimada),
+        costo_unitario = COALESCE($4, costo_unitario)
         WHERE id = $1
         RETURNING id, descripcion, unidad_medida, cantidad_estimada, costo_unitario;
     `;
     const { rows } = await db.query(query, [rubroId, descripcion, cantidad_estimada, costo_unitario]);
+    return rows[0];
+}
+
+/**
+ * Elimina un rubro por ID.
+ * @param {number} rubroId - ID del rubro a eliminar.
+ */
+async function deleteById(rubroId) {
+    const query = 'DELETE FROM Rubro WHERE id = $1 RETURNING id';
+    const { rows } = await db.query(query, [rubroId]);
     return rows[0];
 }
 
@@ -141,4 +147,5 @@ module.exports = {
     updateAvance,
     updateObservaciones,
     update,
+    deleteById,
 };

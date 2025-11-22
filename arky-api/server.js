@@ -59,7 +59,7 @@ app.use('/api/obras', require('./src/routes/presupuestoRoutes')); // Montaje par
 app.use('/api/presupuestos', require('./src/routes/presupuestoRoutes')); // Montaje para /:id/status
 app.use('/api/presupuestos', require('./src/routes/rubroRoutes')); // Montaje para /:presupuestoId/rubros
 app.use('/api/rubros', require('./src/routes/rubroRoutes')); // Montaje para /:rubroId/avance
-// app.use('/api/obras/:obraId/pagos', require('./src/routes/pagoRoutes')); // Montaje para pagos - DESHABILITADO TEMPORALMENTE
+app.use('/api/obras', require('./src/routes/paymentRoutes')); // Montaje para /:projectId/pagos
 
 
 // Middleware de manejo de errores (siempre al final de las rutas)

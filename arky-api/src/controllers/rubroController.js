@@ -29,8 +29,18 @@ const updateRubro = asyncHandler(async (req, res) => {
     sendSuccess(res, rubroActualizado, 200, "Rubro actualizado exitosamente.");
 });
 
+// @route DELETE /api/rubros/:rubroId
+// @access Private (Arquitecto, Encargado)
+const deleteRubro = asyncHandler(async (req, res) => {
+    const rubroId = parseInt(req.params.rubroId);
+    const rubroEliminado = await rubroService.deleteRubro(rubroId, req.user);
+
+    sendSuccess(res, rubroEliminado, 200, "Rubro eliminado exitosamente.");
+});
+
 module.exports = {
     createRubro,
     updateRubroAvance,
-    updateRubro
+    updateRubro,
+    deleteRubro
 };

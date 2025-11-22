@@ -107,6 +107,32 @@ class RubroService {
         const rubroActualizado = await rubroModel.update(rubroId, rubroData);
         return rubroActualizado;
     }
+    async deleteRubro(rubroId, user) {
+        if (user.rol === 'Cliente') {
+            throw new AppError('Solo el personal del estudio puede eliminar rubros.', 403);
+        }
+
+        const rubro = await rubroModel.findById(rubroId);
+        if (!rubro) {
+            throw new AppError('Rubro no encontrado.', 404);
+        }
+
+        const result = await presupuestoModel.findWithRubros(rubro.presupuesto_id);
+        if (!result) {
+            throw new AppError('Presupuesto no encontrado.', 404);
+        }
+
+        const presupuesto = result.presupuesto;
+        // Allow deleting in 'Borrador' or 'Rechazado' (for revisions)
+        if (presupuesto.estado !== 'Borrador' && presupuesto.estado !== 'Rechazado') {
+            throw new AppError(`No se puede eliminar rubros en estado: ${presupuesto.estado}.`, 400);
+        }
+
+        await this.checkObraAccess(presupuesto.obra_id, user);
+
+        const rubroEliminado = await rubroModel.deleteById(rubroId);
+        return rubroEliminado;
+    }
 }
 
 module.exports = new RubroService();

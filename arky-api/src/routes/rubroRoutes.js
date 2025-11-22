@@ -4,7 +4,8 @@ const router = express.Router();
 const {
     createRubro,
     updateRubroAvance,
-    updateRubro
+    updateRubro,
+    deleteRubro
 } = require('../controllers/rubroController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -18,5 +19,8 @@ router.put('/:rubroId/avance', protect, updateRubroAvance);
 
 // 3. Para la ruta de actualización de rubro (descripción, cantidad, costo): PUT /api/rubros/:rubroId
 router.put('/:rubroId', protect, updateRubro);
+
+// 4. Para la ruta de eliminación de rubro: DELETE /api/rubros/:rubroId
+router.delete('/:rubroId', protect, deleteRubro);
 
 module.exports = router;
