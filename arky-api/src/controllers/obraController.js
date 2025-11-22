@@ -23,8 +23,16 @@ const getObraById = asyncHandler(async (req, res) => {
     sendSuccess(res, obra);
 });
 
+// @route PATCH /api/obras/:id/finalize
+// @access Private (Arquitecto only)
+const finalizeObra = asyncHandler(async (req, res) => {
+    const obra = await obraService.finalizeObra(req.params.id, req.user);
+    sendSuccess(res, obra);
+});
+
 module.exports = {
     createObra,
     getObras,
     getObraById,
+    finalizeObra,
 };

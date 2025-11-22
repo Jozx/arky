@@ -23,6 +23,18 @@ export default function Register() {
         ? { title: 'Registro de Arquitecto', specificFieldPlaceholder: 'Número de Licencia', buttonText: 'Registrar Arquitecto' }
         : { title: 'Registro de Cliente', specificFieldPlaceholder: 'CIF o NIF de la Empresa', buttonText: 'Registrar Cliente' };
 
+    const handleRoleChange = (role) => {
+        setUserRole(role);
+        setFormData({
+            nombre: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            specificField: '',
+        });
+        setError('');
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -69,7 +81,7 @@ export default function Register() {
             <div className="flex justify-center space-x-4 mb-6">
                 <button
                     type="button"
-                    onClick={() => setUserRole('architect')}
+                    onClick={() => handleRoleChange('architect')}
                     className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition duration-150 border ${userRole === 'architect'
                         ? 'bg-indigo-600 text-white border-transparent shadow-sm'
                         : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
@@ -79,7 +91,7 @@ export default function Register() {
                 </button>
                 <button
                     type="button"
-                    onClick={() => setUserRole('client')}
+                    onClick={() => handleRoleChange('client')}
                     className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition duration-150 border ${userRole === 'client'
                         ? 'bg-indigo-600 text-white border-transparent shadow-sm'
                         : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'

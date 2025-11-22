@@ -89,8 +89,23 @@ async function findById(id) {
     return rows[0] || null;
 }
 
+/**
+ * Actualiza el status de una obra.
+ */
+async function updateStatus(id, status) {
+    const query = `
+        UPDATE Obra
+        SET status = $1
+        WHERE id = $2
+        RETURNING *;
+    `;
+    const { rows } = await db.query(query, [status, id]);
+    return rows[0] || null;
+}
+
 module.exports = {
     create,
     findVisibleByUser,
     findById,
+    updateStatus,
 };

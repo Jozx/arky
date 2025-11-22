@@ -13,4 +13,7 @@ router.get('/', protect, obraController.getObras);
 // GET /api/obras/:id (Todos los usuarios logueados pueden ver los detalles de una obra si son el dueño o el arquitecto)
 router.get('/:id', protect, obraController.getObraById);
 
+// PATCH /api/obras/:id/finalize (Solo Arquitectos pueden finalizar obras)
+router.patch('/:id/finalize', protect, authorize('Arquitecto'), obraController.finalizeObra);
+
 module.exports = router;

@@ -49,6 +49,29 @@ class ObraService {
 
         return obra;
     }
+
+    async finalizeObra(obraId, user) {
+        // Only architects can finalize obras
+        if (user.rol !== 'Arquitecto') {
+            throw new AppError('Solo los arquitectos pueden finalizar obras.', 403);
+        }
+
+        const obra = await obraModel.findById(obraId);
+
+        if (!obra) {
+            throw new AppError('Obra no encontrada.', 404);
+        }
+
+        // Verify the architect owns this obra
+        if (user.id !== obra.arquitecto_id) {
+            throw new AppError('No autorizado para finalizar esta obra.', 403);
+        }
+
+        // Update obra status to 'Finalizada'
+        const updatedObra = await obraModel.updateStatus(obraId, 'Finalizada');
+
+        return updatedObra;
+    }
 }
 
 module.exports = new ObraService();

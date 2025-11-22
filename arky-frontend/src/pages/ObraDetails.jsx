@@ -44,6 +44,7 @@ function ObraDetailsContent() {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [editingPaymentId, setEditingPaymentId] = useState(null);
     const [editPaymentFormData, setEditPaymentFormData] = useState({ monto: '', fecha_pago: '', descripcion: '' });
+    const [showFinalizeModal, setShowFinalizeModal] = useState(false);
 
     // Calculations
     const totalGeneral = rubros.reduce((acc, curr) => acc + (curr.cantidad_estimada * curr.costo_unitario), 0);
@@ -215,6 +216,20 @@ function ObraDetailsContent() {
         }
     };
 
+    const handleFinalizeObra = async () => {
+        try {
+            await api.patch(`/obras/${id}/finalize`);
+            addToast('Obra finalizada exitosamente', 'success');
+            // Refresh obra data
+            const obraRes = await api.get(`/obras/${id}`);
+            setObra(obraRes.data.data);
+            setShowFinalizeModal(false);
+        } catch (err) {
+            console.error("Error finalizing obra:", err);
+            addToast('Error al finalizar la obra', 'error');
+        }
+    };
+
     const handleUpdateRubroAvance = async (rubroId, field, value) => {
         try {
             const rubro = rubros.find(r => r.id === rubroId);
@@ -302,7 +317,16 @@ function ObraDetailsContent() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Cargando...</div>;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando datos...</p>
+                </div>
+            </div>
+        );
+    }
     if (!obra) return <div className="p-8 text-center">Obra no encontrada</div>;
 
     return (
@@ -361,16 +385,27 @@ function ObraDetailsContent() {
             ) : activeTab === 'presupuesto' ? (
                 <div className="space-y-6">
                     <div className="bg-white dark:bg-gray-800 shadow px-4 py-5 sm:rounded-lg sm:p-6 flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Presupuesto (v{presupuesto.version_numero})</h2>
-                        <span className={clsx(
-                            "px-3 py-1 rounded-full text-sm font-medium",
-                            presupuesto.estado === 'Aprobado' ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" :
-                                presupuesto.estado === 'Rechazado' ? "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200" :
-                                    presupuesto.estado === 'Cancelado' ? "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300" :
-                                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200"
-                        )}>
-                            {presupuesto.estado}
-                        </span>
+                        <div className="flex items-center space-x-4">
+                            <h2 className="text-lg font-medium text-gray-900 dark:text-white">Presupuesto (v{presupuesto.version_numero})</h2>
+                            <span className={clsx(
+                                "px-3 py-1 rounded-full text-sm font-medium",
+                                obra.status === 'Finalizada' ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200" :
+                                    presupuesto.estado === 'Aprobado' ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" :
+                                        presupuesto.estado === 'Rechazado' ? "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200" :
+                                            presupuesto.estado === 'Cancelado' ? "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300" :
+                                                "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200"
+                            )}>
+                                {obra.status === 'Finalizada' ? 'Finalizada' : presupuesto.estado}
+                            </span>
+                        </div>
+                        {user.rol === 'Arquitecto' && presupuesto.estado === 'Aprobado' && obra.status !== 'Finalizada' && (
+                            <button
+                                onClick={() => setShowFinalizeModal(true)}
+                                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                Finalizar Obra
+                            </button>
+                        )}
                     </div>
 
                     {/* Rejection Handling */}
@@ -687,7 +722,7 @@ function ObraDetailsContent() {
                         </div>
 
                         {/* Revision Final Section */}
-                        {user.rol === 'Cliente' && presupuesto.estado !== 'Aprobado' && (
+                        {user.rol === 'Cliente' && presupuesto.estado === 'Borrador' && (
                             <div className="mt-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
                                 <div className="px-4 py-5 sm:p-6">
                                     <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Revisión Final</h3>
@@ -784,6 +819,7 @@ function ObraDetailsContent() {
                                             type="date"
                                             name="date"
                                             id="date"
+                                            max={new Date().toISOString().split('T')[0]}
                                             className="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2 border"
                                             value={newPayment.paymentDate}
                                             onChange={e => setNewPayment({ ...newPayment, paymentDate: e.target.value })}
@@ -870,6 +906,16 @@ function ObraDetailsContent() {
                 confirmText="Sí, Cancelar"
                 cancelText="No, Volver"
                 type="danger"
+            />
+            <ConfirmationModal
+                isOpen={showFinalizeModal}
+                onClose={() => setShowFinalizeModal(false)}
+                onConfirm={handleFinalizeObra}
+                title="Finalizar Obra"
+                message="¿Estás seguro de que deseas marcar esta obra como finalizada? Esta acción indica que todos los trabajos han sido completados."
+                confirmText="Sí, Finalizar"
+                cancelText="Cancelar"
+                type="info"
             />
         </div>
     );
