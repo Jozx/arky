@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layouts/MainLayout';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 import clsx from 'clsx';
 import { Plus, Edit, Trash2, Save, X, Check, ChevronDown } from 'lucide-react';
+import ConfirmationModal from '../components/ui/ConfirmationModal';
 
 export default function ObraDetails() {
     return (
@@ -17,6 +19,7 @@ export default function ObraDetails() {
 function ObraDetailsContent() {
     const { id } = useParams();
     const { user } = useAuth();
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const [obra, setObra] = useState(null);
     const [presupuesto, setPresupuesto] = useState(null);
@@ -25,18 +28,28 @@ function ObraDetailsContent() {
     const [clientFeedback, setClientFeedback] = useState({});
     const [overallNotes, setOverallNotes] = useState('');
     const [loading, setLoading] = useState(true);
-    const [editingRubro, setEditingRubro] = useState(null); // { id, descripcion, cantidad_estimada, costo_unitario }
+    const [editingRubroId, setEditingRubroId] = useState(null);
+    const [editFormData, setEditFormData] = useState({
+        descripcion: '',
+        unidad_medida: '',
+        cantidad_estimada: '',
+        costo_unitario: ''
+    }); // { id, descripcion, cantidad_estimada, costo_unitario }
 
     // Payment State
     const [activeTab, setActiveTab] = useState('presupuesto');
     const [payments, setPayments] = useState([]);
     const [paymentsLoading, setPaymentsLoading] = useState(false);
     const [newPayment, setNewPayment] = useState({ amountPaid: '', paymentDate: new Date().toISOString().split('T')[0], description: '' });
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [editingPaymentId, setEditingPaymentId] = useState(null);
+    const [editPaymentFormData, setEditPaymentFormData] = useState({ monto: '', fecha_pago: '', descripcion: '' });
 
     // Calculations
     const totalGeneral = rubros.reduce((acc, curr) => acc + (curr.cantidad_estimada * curr.costo_unitario), 0);
     const totalPagado = payments.reduce((acc, curr) => acc + Number(curr.monto), 0);
     const saldoPendiente = totalGeneral - totalPagado;
+
 
     useEffect(() => {
         if (activeTab === 'pagos') {
@@ -57,17 +70,68 @@ function ObraDetailsContent() {
 
     const handleRegisterPayment = async (e) => {
         e.preventDefault();
+
+        // Validate that total payments don't exceed budget total
+        const newAmount = Number(newPayment.amountPaid);
+        if (totalPagado + newAmount > totalGeneral) {
+            addToast(`El monto total de pagos (₲ ${(totalPagado + newAmount).toLocaleString('es-PY')}) excedería el total del presupuesto (₲ ${totalGeneral.toLocaleString('es-PY')})`, 'error');
+            return;
+        }
+
         try {
             await api.post(`/obras/${id}/pagos`, newPayment);
             setNewPayment({ amountPaid: '', paymentDate: new Date().toISOString().split('T')[0], description: '' });
             const res = await api.get(`/obras/${id}/pagos`);
             setPayments(res.data.data.payments);
-            alert('Pago registrado exitosamente');
+            addToast('Pago registrado exitosamente', 'success');
         } catch (err) {
             console.error("Error registering payment:", err);
-            alert('Error al registrar el pago');
+            addToast('Error al registrar el pago', 'error');
         }
     };
+
+    const handleEditPayment = (payment) => {
+        setEditingPaymentId(payment.id);
+        setEditPaymentFormData({
+            monto: payment.monto,
+            fecha_pago: payment.fecha_pago.split('T')[0],
+            descripcion: payment.descripcion || ''
+        });
+    };
+
+    const handleCancelEditPayment = () => {
+        setEditingPaymentId(null);
+    };
+
+    const handleSavePayment = async (paymentId) => {
+        try {
+            await api.put(`/pagos/${paymentId}`, editPaymentFormData);
+            const res = await api.get(`/obras/${id}/pagos`);
+            setPayments(res.data.data.payments);
+            setEditingPaymentId(null);
+            addToast('Pago actualizado exitosamente', 'success');
+        } catch (err) {
+            console.error("Error updating payment:", err);
+            addToast('Error al actualizar el pago', 'error');
+        }
+    };
+
+    const handleDeletePayment = async (paymentId) => {
+        if (!window.confirm("¿Estás seguro de que deseas eliminar este pago?")) {
+            return;
+        }
+        try {
+            await api.delete(`/pagos/${paymentId}`);
+            const res = await api.get(`/obras/${id}/pagos`);
+            setPayments(res.data.data.payments);
+            addToast('Pago eliminado exitosamente', 'success');
+        } catch (err) {
+            console.error("Error deleting payment:", err);
+            addToast('Error al eliminar el pago', 'error');
+        }
+    };
+
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -141,13 +205,13 @@ function ObraDetailsContent() {
                 overallNotes,
                 rubroFeedback: rubroFeedbackArray
             });
-            alert(`Presupuesto ${status} exitosamente.`);
+            addToast(`Presupuesto ${status} exitosamente.`, 'success');
             // Refresh
             const presRes = await api.get(`/obras/${id}/presupuestos/latest`);
             setPresupuesto(presRes.data.data.presupuesto);
         } catch (err) {
             console.error("Error updating status:", err);
-            alert("Error al actualizar el estado.");
+            addToast("Error al actualizar el estado.", 'error');
         }
     };
 
@@ -200,28 +264,41 @@ function ObraDetailsContent() {
             setRubros(presRes.data.data.rubros);
         } catch (err) {
             console.error("Error deleting rubro:", err);
-            alert("Error al eliminar el rubro.");
+            addToast("Error al eliminar el rubro.", 'error');
         }
     };
 
-    const handleUpdateRubro = async (e) => {
-        e.preventDefault();
-        if (!editingRubro) return;
+    const handleEditClick = (rubro) => {
+        setEditingRubroId(rubro.id);
+        setEditFormData({
+            descripcion: rubro.descripcion,
+            unidad_medida: rubro.unidad_medida,
+            cantidad_estimada: rubro.cantidad_estimada,
+            costo_unitario: rubro.costo_unitario
+        });
+    };
+
+    const handleCancelClick = () => {
+        setEditingRubroId(null);
+    };
+
+    const handleSaveClick = async (id) => {
         try {
-            await api.put(`/rubros/${editingRubro.id}`, {
-                descripcion: editingRubro.descripcion,
-                cantidad_estimada: editingRubro.cantidad_estimada,
-                costo_unitario: editingRubro.costo_unitario
+            await api.put(`/rubros/${id}`, {
+                descripcion: editFormData.descripcion,
+                unidad_medida: editFormData.unidad_medida,
+                cantidad_estimada: editFormData.cantidad_estimada,
+                costo_unitario: editFormData.costo_unitario
             });
 
             // Refresh data
             const presRes = await api.get(`/obras/${id}/presupuestos/latest`);
             setPresupuesto(presRes.data.data.presupuesto);
             setRubros(presRes.data.data.rubros);
-            setEditingRubro(null); // Close modal
+            setEditingRubroId(null);
         } catch (err) {
             console.error("Error updating rubro:", err);
-            alert("Error al actualizar el rubro.");
+            addToast("Error al actualizar el rubro.", 'error');
         }
     };
 
@@ -289,7 +366,8 @@ function ObraDetailsContent() {
                             "px-3 py-1 rounded-full text-sm font-medium",
                             presupuesto.estado === 'Aprobado' ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" :
                                 presupuesto.estado === 'Rechazado' ? "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200" :
-                                    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200"
+                                    presupuesto.estado === 'Cancelado' ? "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300" :
+                                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200"
                         )}>
                             {presupuesto.estado}
                         </span>
@@ -312,12 +390,20 @@ function ObraDetailsContent() {
                                     </div>
                                 </div>
                                 {user.rol === 'Arquitecto' && (
-                                    <button
-                                        onClick={handleCreatePresupuesto}
-                                        className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                    >
-                                        Resubmitir Presupuesto (v{presupuesto.version_numero + 1})
-                                    </button>
+                                    <div className="flex space-x-3">
+                                        <button
+                                            onClick={() => setShowCancelModal(true)}
+                                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                        >
+                                            Cancelar Presupuesto
+                                        </button>
+                                        <button
+                                            onClick={handleCreatePresupuesto}
+                                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                        >
+                                            Reenviar Presupuesto (v{presupuesto.version_numero + 1})
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -421,84 +507,165 @@ function ObraDetailsContent() {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                            {rubros.map((rubro) => (
-                                                <tr key={rubro.id}>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{rubro.descripcion}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{rubro.unidad_medida}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{rubro.cantidad_estimada}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">₲ {Number(rubro.costo_unitario).toLocaleString('es-PY', { maximumFractionDigits: 0 })}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-bold">₲ {(rubro.cantidad_estimada * rubro.costo_unitario).toLocaleString('es-PY', { maximumFractionDigits: 0 })}</td>
-
-                                                    {presupuesto.estado === 'Aprobado' && (
-                                                        <>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                                {user.rol === 'Arquitecto' ? (
-                                                                    <select
-                                                                        value={rubro.avance_estado || 'No Iniciado'}
-                                                                        onChange={(e) => handleUpdateRubroAvance(rubro.id, 'estado', e.target.value)}
-                                                                        className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                                                    >
-                                                                        <option value="No Iniciado">No Iniciado</option>
-                                                                        <option value="En Proceso">En Proceso</option>
-                                                                        <option value="Terminado">Terminado</option>
-                                                                        <option value="Bloqueado">Bloqueado</option>
-                                                                    </select>
-                                                                ) : (
-                                                                    <span className={clsx(
-                                                                        "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                                                        rubro.avance_estado === 'Terminado' ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" :
-                                                                            rubro.avance_estado === 'En Proceso' ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200" :
-                                                                                rubro.avance_estado === 'Bloqueado' ? "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200" :
-                                                                                    "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                                                                    )}>
-                                                                        {rubro.avance_estado || 'No Iniciado'}
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                                {user.rol === 'Arquitecto' ? (
-                                                                    <select
-                                                                        value={rubro.porcentaje_avance || 0}
-                                                                        onChange={(e) => handleUpdateRubroAvance(rubro.id, 'porcentaje_avance', e.target.value)}
-                                                                        disabled={rubro.avance_estado === 'Terminado'}
-                                                                        className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                    >
-                                                                        <option value="0">0%</option>
-                                                                        <option value="25">25%</option>
-                                                                        <option value="50">50%</option>
-                                                                        <option value="75">75%</option>
-                                                                        <option value="100">100%</option>
-                                                                    </select>
-                                                                ) : (
-                                                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 min-w-[100px]">
-                                                                        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${rubro.porcentaje_avance || 0}%` }}></div>
-                                                                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block text-right">{rubro.porcentaje_avance || 0}%</span>
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                        </>
-                                                    )}
-
-                                                    {user.rol === 'Cliente' && presupuesto.estado !== 'Aprobado' && (
+                                            {rubros.map((rubro) => {
+                                                const isEditing = editingRubroId === rubro.id;
+                                                return (
+                                                    <tr key={rubro.id}>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-1 border"
+                                                                    value={editFormData.descripcion}
+                                                                    onChange={(e) => setEditFormData({ ...editFormData, descripcion: e.target.value })}
+                                                                />
+                                                            ) : (
+                                                                rubro.descripcion
+                                                            )}
+                                                        </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                            {rubro.observaciones || '-'}
+                                                            {isEditing ? (
+                                                                <select
+                                                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-1 border"
+                                                                    value={editFormData.unidad_medida}
+                                                                    onChange={(e) => setEditFormData({ ...editFormData, unidad_medida: e.target.value })}
+                                                                >
+                                                                    <option value="m²">m²</option>
+                                                                    <option value="m³">m³</option>
+                                                                    <option value="kg">kg</option>
+                                                                    <option value="tn">tn</option>
+                                                                    <option value="Un.">Un.</option>
+                                                                    <option value="m">m</option>
+                                                                    <option value="h">h</option>
+                                                                    <option value="j">j</option>
+                                                                    <option value="kWh">kWh</option>
+                                                                    <option value="l">l</option>
+                                                                    <option value="Gl">Gl</option>
+                                                                </select>
+                                                            ) : (
+                                                                rubro.unidad_medida
+                                                            )}
                                                         </td>
-                                                    )}
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-1 border"
+                                                                    value={editFormData.cantidad_estimada}
+                                                                    onChange={(e) => setEditFormData({ ...editFormData, cantidad_estimada: e.target.value })}
+                                                                />
+                                                            ) : (
+                                                                rubro.cantidad_estimada
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-1 border"
+                                                                    value={editFormData.costo_unitario ? Number(editFormData.costo_unitario).toLocaleString('es-PY', { maximumFractionDigits: 0 }) : ''}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value.replace(/\./g, '');
+                                                                        if (/^\d*$/.test(val)) setEditFormData({ ...editFormData, costo_unitario: val });
+                                                                    }}
+                                                                />
+                                                            ) : (
+                                                                `₲ ${Number(rubro.costo_unitario).toLocaleString('es-PY', { maximumFractionDigits: 0 })}`
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-bold">
+                                                            {isEditing ? (
+                                                                `₲ ${(editFormData.cantidad_estimada * editFormData.costo_unitario).toLocaleString('es-PY', { maximumFractionDigits: 0 })}`
+                                                            ) : (
+                                                                `₲ ${(rubro.cantidad_estimada * rubro.costo_unitario).toLocaleString('es-PY', { maximumFractionDigits: 0 })}`
+                                                            )}
+                                                        </td>
 
-                                                    {user.rol === 'Arquitecto' && (presupuesto.estado === 'Borrador' || presupuesto.estado === 'Rechazado') && (
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                            <div className="flex items-center space-x-3">
-                                                                <button onClick={() => setEditingRubro(rubro)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Editar">
-                                                                    <Edit className="h-5 w-5" />
-                                                                </button>
-                                                                <button onClick={() => handleDeleteRubro(rubro.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Eliminar">
-                                                                    <Trash2 className="h-5 w-5" />
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    )}
-                                                </tr>
-                                            ))}
+                                                        {presupuesto.estado === 'Aprobado' && (
+                                                            <>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                                    {user.rol === 'Arquitecto' ? (
+                                                                        <select
+                                                                            value={rubro.avance_estado || 'No Iniciado'}
+                                                                            onChange={(e) => handleUpdateRubroAvance(rubro.id, 'estado', e.target.value)}
+                                                                            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                                                        >
+                                                                            <option value="No Iniciado">No Iniciado</option>
+                                                                            <option value="En Proceso">En Proceso</option>
+                                                                            <option value="Terminado">Terminado</option>
+                                                                            <option value="Bloqueado">Bloqueado</option>
+                                                                        </select>
+                                                                    ) : (
+                                                                        <span className={clsx(
+                                                                            "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
+                                                                            rubro.avance_estado === 'Terminado' ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" :
+                                                                                rubro.avance_estado === 'En Proceso' ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200" :
+                                                                                    rubro.avance_estado === 'Bloqueado' ? "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200" :
+                                                                                        "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                                                                        )}>
+                                                                            {rubro.avance_estado || 'No Iniciado'}
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                                    {user.rol === 'Arquitecto' ? (
+                                                                        <select
+                                                                            value={rubro.porcentaje_avance || 0}
+                                                                            onChange={(e) => handleUpdateRubroAvance(rubro.id, 'porcentaje_avance', e.target.value)}
+                                                                            disabled={rubro.avance_estado === 'Terminado'}
+                                                                            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                        >
+                                                                            <option value="0">0%</option>
+                                                                            <option value="25">25%</option>
+                                                                            <option value="50">50%</option>
+                                                                            <option value="75">75%</option>
+                                                                            <option value="100">100%</option>
+                                                                        </select>
+                                                                    ) : (
+                                                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 min-w-[100px]">
+                                                                            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${rubro.porcentaje_avance || 0}%` }}></div>
+                                                                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block text-right">{rubro.porcentaje_avance || 0}%</span>
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                            </>
+                                                        )}
+
+                                                        {user.rol === 'Cliente' && presupuesto.estado !== 'Aprobado' && (
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                                {rubro.observaciones || '-'}
+                                                            </td>
+                                                        )}
+
+                                                        {user.rol === 'Arquitecto' && (presupuesto.estado === 'Borrador' || presupuesto.estado === 'Rechazado') && (
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                                <div className="flex items-center space-x-3">
+                                                                    {isEditing ? (
+                                                                        <>
+                                                                            <button onClick={() => handleSaveClick(rubro.id)} className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300" title="Guardar">
+                                                                                <Check className="h-5 w-5" />
+                                                                            </button>
+                                                                            <button onClick={handleCancelClick} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Cancelar">
+                                                                                <X className="h-5 w-5" />
+                                                                            </button>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <button onClick={() => handleEditClick(rubro)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Editar">
+                                                                                <Edit className="h-5 w-5" />
+                                                                            </button>
+                                                                            <button onClick={() => handleDeleteRubro(rubro.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Eliminar">
+                                                                                <Trash2 className="h-5 w-5" />
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -555,12 +722,7 @@ function ObraDetailsContent() {
                             </div>
                         )}
 
-                        <EditRubroModal
-                            rubro={editingRubro}
-                            onClose={() => setEditingRubro(null)}
-                            onSave={handleUpdateRubro}
-                            setRubro={setEditingRubro}
-                        />
+
                     </div>
                 </div>
             ) : (
@@ -677,7 +839,7 @@ function ObraDetailsContent() {
                                                 payments.map((payment) => (
                                                     <tr key={payment.id}>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                            {new Date(payment.fecha_pago).toLocaleDateString()}
+                                                            {new Date(payment.fecha_pago).toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                             {payment.descripcion || '-'}
@@ -699,74 +861,18 @@ function ObraDetailsContent() {
                     </div>
                 </div>
             )}
+            <ConfirmationModal
+                isOpen={showCancelModal}
+                onClose={() => setShowCancelModal(false)}
+                onConfirm={() => handleStatusUpdate('Cancelado')}
+                title="Cancelar Presupuesto"
+                message="¿Estás seguro de que deseas cancelar este presupuesto? Esta acción no se puede deshacer y el presupuesto quedará inhabilitado."
+                confirmText="Sí, Cancelar"
+                cancelText="No, Volver"
+                type="danger"
+            />
         </div>
     );
 }
 
-function EditRubroModal({ rubro, onClose, onSave, setRubro }) {
-    if (!rubro) return null;
 
-    return (
-        <div className="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={onClose}></div>
-                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-                    <div>
-                        <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">Editar Rubro</h3>
-                        <div className="mt-2">
-                            <form onSubmit={onSave} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</label>
-                                    <input
-                                        type="text"
-                                        className="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        value={rubro.descripcion}
-                                        onChange={e => setRubro({ ...rubro, descripcion: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cantidad</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        className="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        value={rubro.cantidad_estimada}
-                                        onChange={e => setRubro({ ...rubro, cantidad_estimada: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Costo Unitario (₲)</label>
-                                    <input
-                                        type="text"
-                                        className="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        value={rubro.costo_unitario}
-                                        onChange={e => setRubro({ ...rubro, costo_unitario: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                                    <button
-                                        type="submit"
-                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
-                                    >
-                                        Guardar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
-                                        onClick={onClose}
-                                    >
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}

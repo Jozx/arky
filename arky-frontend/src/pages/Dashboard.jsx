@@ -81,12 +81,11 @@ export default function Dashboard() {
                     >
                         <div className="px-4 py-5 sm:p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <span className={clsx(
-                                    "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                    obra.status === 'Activa' ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                                )}>
-                                    {obra.status}
-                                </span>
+                                {obra.latest_budget_status === 'Aprobado' && (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">
+                                        Activa
+                                    </span>
+                                )}
                                 <span className="text-sm text-gray-500 dark:text-gray-400">
                                     {new Date(obra.fecha_inicio_estimada).toLocaleDateString()}
                                 </span>

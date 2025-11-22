@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layouts/AuthLayout';
 
@@ -15,6 +16,7 @@ export default function Register() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { register } = useAuth();
+    const { addToast } = useToast();
     const navigate = useNavigate();
 
     const config = userRole === 'architect'
@@ -50,7 +52,7 @@ export default function Register() {
             const result = await register(payload);
 
             if (result.success) {
-                alert('Registro exitoso. Por favor inicia sesión.');
+                addToast('Registro exitoso. Por favor inicia sesión.', 'success');
                 navigate('/login');
             } else {
                 setError(result.message);
