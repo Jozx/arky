@@ -1,5 +1,6 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
+const envFile = process.env.NODE_ENV === 'production' ? '../.env.prod' : '../.env.local';
+require('dotenv').config({ path: path.join(__dirname, envFile) });
 const db = require('../src/config/db');
 const bcrypt = require('bcryptjs');
 const readline = require('readline');
