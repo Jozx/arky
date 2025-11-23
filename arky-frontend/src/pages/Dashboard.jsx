@@ -6,6 +6,7 @@ import MainLayout from '../components/layouts/MainLayout';
 import clsx from 'clsx';
 import Button from '../components/ui/Button';
 import { Plus, UserPlus } from 'lucide-react';
+import { formatDate } from '../utils/dateUtils';
 import RegisterClientModal from '../components/dashboard/RegisterClientModal';
 
 import AdminDashboard from './AdminDashboard';
@@ -233,7 +234,7 @@ export default function Dashboard() {
                                     </span>
                                 )}
                                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    {new Date(obra.fecha_inicio_estimada).toLocaleDateString()}
+                                    {formatDate(obra.fecha_inicio_estimada)}
                                 </span>
                             </div>
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white truncate">

@@ -599,7 +599,7 @@ function ObraDetailsContent() {
             ) : (
                 /* Avances Tab Content */
                 <div className="space-y-6">
-                    {user.rol !== 'Cliente' && (
+                    {user.rol !== 'Cliente' && presupuesto.estado === 'Aprobado' && (
                         <AvanceUploadForm
                             obraId={id}
                             rubros={rubros}

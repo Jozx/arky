@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, User } from 'lucide-react';
+import { formatDate } from '../../utils/dateUtils';
 
 export default function AvanceList({ groupedAvances }) {
     const [selectedImage, setSelectedImage] = useState(null);
@@ -36,7 +37,7 @@ export default function AvanceList({ groupedAvances }) {
                                     <div className="mt-2">
                                         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
                                             <Calendar className="h-3 w-3 mr-1" />
-                                            {new Date(avance.fecha_registro).toLocaleDateString('es-PY')}
+                                            {formatDate(avance.fecha_registro)}
                                             <span className="mx-1">•</span>
                                             <User className="h-3 w-3 mr-1" />
                                             {avance.uploaded_by_name}

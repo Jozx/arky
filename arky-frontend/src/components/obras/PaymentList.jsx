@@ -1,4 +1,4 @@
-import React from 'react';
+import { formatDate } from '../../utils/dateUtils';
 import { Edit, Trash2, Check, X } from 'lucide-react';
 
 export default function PaymentList({
@@ -129,19 +129,6 @@ export default function PaymentList({
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                         {isEditing ? (
                                                             <input
-                                                                type="date"
-                                                                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-1 border"
-                                                                value={editPaymentFormData.fecha_pago}
-                                                                onChange={(e) => setEditPaymentFormData({ ...editPaymentFormData, fecha_pago: e.target.value })}
-                                                            />
-                                                        ) : (
-                                                            new Date(payment.fecha_pago).toLocaleDateString('es-PY')
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
                                                                 className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-1 border"
                                                                 value={editPaymentFormData.descripcion}
                                                                 onChange={(e) => setEditPaymentFormData({ ...editPaymentFormData, descripcion: e.target.value })}
