@@ -1,4 +1,3 @@
-// arky-api/src/models/obraModel.js
 const db = require('../config/db');
 
 /**
@@ -30,26 +29,29 @@ async function findVisibleByUser(userId, rol) {
 
     // Subquery para obtener el estado del último presupuesto de cada obra
     // Se asume que el último presupuesto es el que tiene mayor version_numero
-    const statusSubquery = `
+    const joins = `
         LEFT JOIN Presupuesto p ON p.obra_id = o.id AND p.version_numero = (
             SELECT MAX(version_numero) FROM Presupuesto WHERE obra_id = o.id
         )
+        LEFT JOIN "User" u_cli ON o.cliente_id = u_cli.id
     `;
 
     if (rol === 'Encargado') {
         query = `
             SELECT o.id, o.nombre, o.direccion, o.status, o.fecha_inicio_estimada,
-                   p.estado as latest_budget_status
+                   p.estado as latest_budget_status,
+                   u_cli.nombre as cliente_nombre
             FROM Obra o
-            ${statusSubquery}
+            ${joins}
             ORDER BY o.fecha_inicio_estimada DESC;
         `;
     } else if (rol === 'Arquitecto') {
         query = `
             SELECT o.id, o.nombre, o.direccion, o.status, o.fecha_inicio_estimada,
-                   p.estado as latest_budget_status
+                   p.estado as latest_budget_status,
+                   u_cli.nombre as cliente_nombre
             FROM Obra o
-            ${statusSubquery}
+            ${joins}
             WHERE o.arquitecto_id = $1
             ORDER BY o.fecha_inicio_estimada DESC;
         `;
@@ -57,9 +59,10 @@ async function findVisibleByUser(userId, rol) {
     } else if (rol === 'Cliente') {
         query = `
             SELECT o.id, o.nombre, o.direccion, o.status, o.fecha_inicio_estimada,
-                   p.estado as latest_budget_status
+                   p.estado as latest_budget_status,
+                   u_cli.nombre as cliente_nombre
             FROM Obra o
-            ${statusSubquery}
+            ${joins}
             WHERE o.cliente_id = $1
             ORDER BY o.fecha_inicio_estimada DESC;
         `;

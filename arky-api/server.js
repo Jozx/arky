@@ -8,7 +8,7 @@ const cors = require('cors');
 dotenv.config();
 
 // 2. Importar módulos que dependen de process.env
-const { errorHandler } = require('./src/middleware/errorMiddleware');
+const errorHandler = require('./src/middleware/errorHandler');
 const connectDB = require('./src/config/db');
 
 // Conexión a la base de datos

@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layouts/AuthLayout';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 
 export default function Register() {
     const [userRole, setUserRole] = useState('architect');
@@ -79,93 +81,64 @@ export default function Register() {
     return (
         <AuthLayout title={config.title} subtitle="Crea una cuenta nueva">
             <div className="flex justify-center space-x-4 mb-6">
-                <button
+                <Button
                     type="button"
                     onClick={() => handleRoleChange('architect')}
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition duration-150 border ${userRole === 'architect'
-                        ? 'bg-indigo-600 text-white border-transparent shadow-sm'
-                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                        }`}
+                    variant={userRole === 'architect' ? 'primary' : 'outline'}
+                    className="flex-1"
                 >
                     Soy Arquitecto
-                </button>
-                <button
+                </Button>
+                <Button
                     type="button"
                     onClick={() => handleRoleChange('client')}
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition duration-150 border ${userRole === 'client'
-                        ? 'bg-indigo-600 text-white border-transparent shadow-sm'
-                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                        }`}
+                    variant={userRole === 'client' ? 'primary' : 'outline'}
+                    className="flex-1"
                 >
                     Soy Cliente
-                </button>
+                </Button>
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit}>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre Completo</label>
-                    <div className="mt-1">
-                        <input
-                            type="text"
-                            required
-                            className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                            value={formData.nombre}
-                            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                        />
-                    </div>
-                </div>
+                <Input
+                    label="Nombre Completo"
+                    type="text"
+                    required
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                />
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico</label>
-                    <div className="mt-1">
-                        <input
-                            type="email"
-                            required
-                            className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                    </div>
-                </div>
+                <Input
+                    label="Correo Electrónico"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{config.specificFieldPlaceholder}</label>
-                    <div className="mt-1">
-                        <input
-                            type="text"
-                            required
-                            className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                            value={formData.specificField}
-                            onChange={(e) => setFormData({ ...formData, specificField: e.target.value })}
-                        />
-                    </div>
-                </div>
+                <Input
+                    label={config.specificFieldPlaceholder}
+                    type="text"
+                    required
+                    value={formData.specificField}
+                    onChange={(e) => setFormData({ ...formData, specificField: e.target.value })}
+                />
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña</label>
-                    <div className="mt-1">
-                        <input
-                            type="password"
-                            required
-                            className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        />
-                    </div>
-                </div>
+                <Input
+                    label="Contraseña"
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmar Contraseña</label>
-                    <div className="mt-1">
-                        <input
-                            type="password"
-                            required
-                            className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                            value={formData.confirmPassword}
-                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                        />
-                    </div>
-                </div>
+                <Input
+                    label="Confirmar Contraseña"
+                    type="password"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                />
 
                 {error && (
                     <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
@@ -177,13 +150,13 @@ export default function Register() {
                     </div>
                 )}
 
-                <button
+                <Button
                     type="submit"
-                    disabled={isLoading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    isLoading={isLoading}
+                    className="w-full"
                 >
                     {isLoading ? 'Registrando...' : config.buttonText}
-                </button>
+                </Button>
             </form>
 
             <div className="mt-6">
@@ -199,11 +172,10 @@ export default function Register() {
                 </div>
 
                 <div className="mt-6">
-                    <Link
-                        to="/login"
-                        className="w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        Inicia Sesión
+                    <Link to="/login" className="w-full block">
+                        <Button variant="outline" className="w-full">
+                            Inicia Sesión
+                        </Button>
                     </Link>
                 </div>
             </div>

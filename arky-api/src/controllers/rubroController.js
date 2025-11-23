@@ -1,10 +1,10 @@
 const rubroService = require('../services/rubroService');
 const { sendSuccess } = require('../utils/responseHandler');
-const asyncHandler = require('express-async-handler');
+const catchAsync = require('../utils/catchAsync');
 
 // @route POST /api/presupuestos/:presupuestoId/rubros
 // @access Private (Arquitecto, Encargado)
-const createRubro = asyncHandler(async (req, res) => {
+const createRubro = catchAsync(async (req, res) => {
     const presupuestoId = parseInt(req.params.presupuestoId);
     const nuevoRubro = await rubroService.createRubro(presupuestoId, req.body, req.user);
 
@@ -13,7 +13,7 @@ const createRubro = asyncHandler(async (req, res) => {
 
 // @route PUT /api/rubros/:rubroId/avance
 // @access Private (Arquitecto, Encargado)
-const updateRubroAvance = asyncHandler(async (req, res) => {
+const updateRubroAvance = catchAsync(async (req, res) => {
     const rubroId = parseInt(req.params.rubroId);
     const avanceActualizado = await rubroService.updateRubroAvance(rubroId, req.body, req.user);
 
@@ -22,7 +22,7 @@ const updateRubroAvance = asyncHandler(async (req, res) => {
 
 // @route PUT /api/rubros/:rubroId
 // @access Private (Arquitecto, Encargado)
-const updateRubro = asyncHandler(async (req, res) => {
+const updateRubro = catchAsync(async (req, res) => {
     const rubroId = parseInt(req.params.rubroId);
     const rubroActualizado = await rubroService.updateRubro(rubroId, req.body, req.user);
 
@@ -31,7 +31,7 @@ const updateRubro = asyncHandler(async (req, res) => {
 
 // @route DELETE /api/rubros/:rubroId
 // @access Private (Arquitecto, Encargado)
-const deleteRubro = asyncHandler(async (req, res) => {
+const deleteRubro = catchAsync(async (req, res) => {
     const rubroId = parseInt(req.params.rubroId);
     const rubroEliminado = await rubroService.deleteRubro(rubroId, req.user);
 

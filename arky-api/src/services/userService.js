@@ -2,6 +2,7 @@
 const userModel = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const AppError = require('../utils/AppError');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -11,13 +12,13 @@ const JWT_SECRET = process.env.JWT_SECRET;
  */
 async function registerUser(email, password, nombre, rol, numero_licencia, cif_empresa) {
     if (!email || !password || !nombre || !rol) {
-        throw new Error('Todos los campos son requeridos.');
+        throw new AppError('Todos los campos son requeridos.', 400);
     }
 
     // 1. Verificar si el usuario ya existe
     const existingUser = await userModel.findByEmail(email);
     if (existingUser) {
-        throw new Error('El email ya está registrado.');
+        throw new AppError('El email ya está registrado.', 400);
     }
 
     // 2. Hashear la contraseña
@@ -44,13 +45,13 @@ async function loginUser(email, password) {
     // 1. Buscar usuario por email
     const user = await userModel.findByEmail(email);
     if (!user) {
-        throw new Error('Credenciales inválidas.');
+        throw new AppError('Credenciales inválidas.', 401);
     }
 
     // 2. Comparar contraseñas
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-        throw new Error('Credenciales inválidas.');
+        throw new AppError('Credenciales inválidas.', 401);
     }
 
     // 3. Generar token

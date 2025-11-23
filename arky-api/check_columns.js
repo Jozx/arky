@@ -4,13 +4,16 @@ const db = require('./src/config/db');
 
 async function checkColumns() {
     try {
-        console.log('Checking Cliente table columns...');
-        const res = await db.query(`
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_name = 'cliente';
-        `);
-        console.log('Columns in Cliente table:', res.rows);
+        const tables = ['obra', 'presupuesto', 'rubro', 'pago', 'user', 'arquitecto', 'cliente'];
+        for (const table of tables) {
+            console.log(`\nChecking ${table} table columns...`);
+            const res = await db.query(`
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = '${table}';
+            `);
+            console.log(res.rows.map(r => `${r.column_name} (${r.data_type})`));
+        }
     } catch (err) {
         console.error('Error checking columns:', err);
     } finally {

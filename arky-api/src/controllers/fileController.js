@@ -1,5 +1,6 @@
 // arky-api/src/controllers/fileController.js
-const asyncHandler = require('express-async-handler');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/AppError');
 const fileModel = require('../models/fileModel');
 const obraModel = require('../models/obraModel');
 const path = require('path');
@@ -13,13 +14,12 @@ const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads');
  * @description Sube un archivo a la carpeta 'uploads' y registra su metadata en PostgreSQL.
  * @access Private (Arquitecto, Encargado)
  */
-const uploadFile = asyncHandler(async (req, res) => {
+const uploadFile = catchAsync(async (req, res, next) => {
     const obraId = parseInt(req.params.obraId);
 
     // 1. Verificar Rol
     if (req.user.rol === 'Cliente') {
-        res.status(403);
-        throw new Error('Solo el personal del estudio puede subir archivos a la obra.');
+        return next(new AppError('Solo el personal del estudio puede subir archivos a la obra.', 403));
     }
 
     // 2. Verificar archivo y metadata
@@ -27,8 +27,7 @@ const uploadFile = asyncHandler(async (req, res) => {
     const { tipo, descripcion } = req.body;
 
     if (!file) {
-        res.status(400);
-        throw new Error('No se subió ningún archivo. Asegúrate de usar la clave "archivo" en form-data.');
+        return next(new AppError('No se subió ningún archivo. Asegúrate de usar la clave "archivo" en form-data.', 400));
     }
 
     // 3. Validar tipo de archivo
@@ -38,8 +37,7 @@ const uploadFile = asyncHandler(async (req, res) => {
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath); // Eliminar el archivo
         }
-        res.status(400);
-        throw new Error('Tipo de archivo inválido. Debe ser: Foto Avance, Plano o Documento Legal.');
+        return next(new AppError('Tipo de archivo inválido. Debe ser: Foto Avance, Plano o Documento Legal.', 400));
     }
 
     // 4. Verificar Obra y Acceso
@@ -50,8 +48,7 @@ const uploadFile = asyncHandler(async (req, res) => {
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
-        res.status(404);
-        throw new Error('Obra no encontrada.');
+        return next(new AppError('Obra no encontrada.', 404));
     }
 
     // 5. Determinar la URL pública
@@ -84,10 +81,7 @@ const uploadFile = asyncHandler(async (req, res) => {
             fs.unlinkSync(filePath);
         }
         console.error('Fallo al registrar en DB, archivo eliminado de disco:', dbError.message);
-        res.status(500).json({
-            message: 'Fallo al registrar la metadata del archivo en la base de datos y se eliminó el archivo subido.',
-            error: dbError.message
-        });
+        return next(new AppError('Fallo al registrar la metadata del archivo en la base de datos y se eliminó el archivo subido.', 500));
     }
 });
 
@@ -96,20 +90,18 @@ const uploadFile = asyncHandler(async (req, res) => {
  * @description Lista todos los archivos (metadata) de una obra desde PostgreSQL.
  * @access Private (Todos los que tienen acceso a la obra)
  */
-const getFilesByObra = asyncHandler(async (req, res) => {
+const getFilesByObra = catchAsync(async (req, res, next) => {
     const obraId = parseInt(req.params.obraId);
 
     // 1. Verificar Obra y Acceso
     const obra = await obraModel.findById(obraId);
     if (!obra) {
-        res.status(404);
-        throw new Error('Obra no encontrada.');
+        return next(new AppError('Obra no encontrada.', 404));
     }
 
     // Verificación de acceso al cliente (el Arquitecto ya tiene acceso)
     if (req.user.rol === 'Cliente' && req.user.id !== obra.cliente_id) {
-        res.status(403);
-        throw new Error('No autorizado para ver archivos de esta obra.');
+        return next(new AppError('No autorizado para ver archivos de esta obra.', 403));
     }
 
     // 2. Obtener Archivos de PostgreSQL
@@ -123,28 +115,25 @@ const getFilesByObra = asyncHandler(async (req, res) => {
  * @description Elimina un archivo del disco local y de la base de datos.
  * @access Private (Arquitecto, Encargado)
  */
-const deleteFile = asyncHandler(async (req, res) => {
+const deleteFile = catchAsync(async (req, res, next) => {
     const fileId = parseInt(req.params.fileId);
 
     // 1. Verificar Rol: Solo personal de estudio puede eliminar.
     if (req.user.rol === 'Cliente') {
-        res.status(403);
-        throw new Error('Solo el personal del estudio puede eliminar archivos.');
+        return next(new AppError('Solo el personal del estudio puede eliminar archivos.', 403));
     }
 
     // 2. Obtener metadata del archivo
     const archivo = await fileModel.findById(fileId);
 
     if (!archivo) {
-        res.status(404);
-        throw new Error('Archivo no encontrado.');
+        return next(new AppError('Archivo no encontrado.', 404));
     }
 
     // 3. Verificar acceso a la obra (solo por seguridad)
     const obra = await obraModel.findById(archivo.obra_id);
     if (!obra) {
-        res.status(404);
-        throw new Error('Obra asociada al archivo no encontrada.');
+        return next(new AppError('Obra asociada al archivo no encontrada.', 404));
     }
 
     const storagePath = archivo.ruta_almacenamiento;
@@ -164,10 +153,7 @@ const deleteFile = asyncHandler(async (req, res) => {
 
             // Si la DB eliminó el registro pero el FS falló, notificamos el error de disco.
             if (dbDeleted) {
-                return res.status(500).json({
-                    message: `Archivo eliminado de la DB, pero falló la eliminación en el disco.`,
-                    diskError: error.message
-                });
+                return next(new AppError(`Archivo eliminado de la DB, pero falló la eliminación en el disco: ${error.message}`, 500));
             }
         }
     } else {
@@ -182,7 +168,7 @@ const deleteFile = asyncHandler(async (req, res) => {
             diskStatus: fsDeleted ? 'Eliminado de disco' : 'No encontrado en disco (metadata borrada)'
         });
     } else {
-        res.status(500).json({ message: 'Error interno: Falló la eliminación del registro en DB.' });
+        return next(new AppError('Error interno: Falló la eliminación del registro en DB.', 500));
     }
 });
 

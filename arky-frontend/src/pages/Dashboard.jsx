@@ -220,6 +220,11 @@ export default function Dashboard() {
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 truncate">
                                 {obra.direccion}
                             </p>
+                            {obra.cliente_nombre && (
+                                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 truncate">
+                                    Cliente: {obra.cliente_nombre}
+                                </p>
+                            )}
                             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
                                 <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Presupuesto</span>
                                 {getStatusBadge(obra.status === 'Finalizada' ? 'Finalizada' : obra.latest_budget_status)}
