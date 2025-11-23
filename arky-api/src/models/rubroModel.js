@@ -76,28 +76,22 @@ async function findById(rubroId) {
  */
 async function updateAvance(rubroId, estado, porcentajeAvance) {
     const query = `
-        UPDATE TrackingAvance
-        SET estado = $2,
-        porcentaje_avance = $3,
-        fecha_actualizacion = CURRENT_TIMESTAMP
-        WHERE rubro_id = $1
+        INSERT INTO TrackingAvance (rubro_id, estado, porcentaje_avance, fecha_actualizacion)
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+        ON CONFLICT (rubro_id)
+        DO UPDATE SET
+            estado = EXCLUDED.estado,
+            porcentaje_avance = EXCLUDED.porcentaje_avance,
+            fecha_actualizacion = EXCLUDED.fecha_actualizacion
         RETURNING rubro_id, estado, porcentaje_avance, fecha_actualizacion;
     `;
     const values = [rubroId, estado, porcentajeAvance];
 
     const { rows } = await db.query(query, values);
-
-    if (rows.length === 0) {
-        throw new Error('No se pudo actualizar el avance. El rubro no existe en TrackingAvance.');
-    }
-
     return rows[0];
 }
 
 /**
- * Actualiza las observaciones de un rubro (feedback del cliente).
- * @param {number} rubroId - ID del rubro.
- * @param {string} observaciones - Observaciones del cliente.
  * @returns {object} El rubro actualizado.
  */
 async function updateObservaciones(rubroId, observaciones) {
