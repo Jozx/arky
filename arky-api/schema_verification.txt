@@ -1,0 +1,34 @@
+
+🔍 Verificando estructura de la base de datos...
+
+📋 Tablas encontradas:
+   ✓ User
+   ✓ arquitecto
+   ✓ avance
+   ✓ cliente
+   ✓ comentario
+   ✓ media
+   ✓ obra
+   ✓ pago
+   ✓ pagorubro
+   ✓ presupuesto
+   ✓ rubro
+   ✓ trackingavance
+
+🏷️  ENUMs encontrados:
+   ✓ avance_estado: No Iniciado, En Proceso, Completado, Bloqueado, Terminado
+   ✓ media_tipo: Foto, Video, Documento
+   ✓ obra_status: Activa, Pausada, Finalizada, Cancelada
+   ✓ presupuesto_estado: Borrador, Negociación, Aprobado, Rechazado, Cancelado
+   ✓ user_role: Arquitecto, Cliente, Encargado, Admin
+
+👤 Usuario Admin:
+   ✓ Email: admin@arky.com
+   ✓ Nombre: Admin
+   ✓ Rol: Admin
+
+📊 Resumen:
+   Total de tablas: 12
+   Total de ENUMs: 5
+
+⚠️  Tablas faltantes: Obra, Presupuesto, Rubro, TrackingAvance, Pago, Avance, Archivo, schema_version
