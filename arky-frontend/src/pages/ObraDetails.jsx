@@ -11,6 +11,9 @@ import RubroList from '../components/obras/RubroList';
 import PaymentList from '../components/obras/PaymentList';
 import useObra from '../hooks/useObra';
 
+import AvanceUploadForm from '../components/obras/AvanceUploadForm';
+import AvanceList from '../components/obras/AvanceList';
+
 export default function ObraDetails() {
     return (
         <MainLayout>
@@ -59,6 +62,10 @@ function ObraDetailsContent() {
     const [editPaymentFormData, setEditPaymentFormData] = useState({ monto: '', fecha_pago: '', descripcion: '' });
     const [showFinalizeModal, setShowFinalizeModal] = useState(false);
 
+    // Avances State
+    const [avances, setAvances] = useState({});
+    const [avancesLoading, setAvancesLoading] = useState(false);
+
     // Calculations
     const totalGeneral = rubros.reduce((acc, curr) => acc + (curr.cantidad_estimada * curr.costo_unitario), 0);
     const totalPagado = payments.reduce((acc, curr) => acc + Number(curr.monto), 0);
@@ -92,8 +99,24 @@ function ObraDetailsContent() {
                 }
             };
             fetchPayments();
+        } else if (activeTab === 'avances') {
+            fetchAvances();
         }
     }, [id, activeTab]);
+
+    const fetchAvances = async () => {
+        setAvancesLoading(true);
+        try {
+            const res = await api.get(`/obras/${id}/avances`);
+            setAvances(res.data.data);
+        } catch (err) {
+            console.error("Error fetching avances:", err);
+            // Don't show error toast on 404 (no avances yet) if API returns 404 for empty list, 
+            // but our controller returns 200 with empty object if no matches, so it's fine.
+        } finally {
+            setAvancesLoading(false);
+        }
+    };
 
     const handleRegisterPayment = async (e) => {
         e.preventDefault();
@@ -327,6 +350,15 @@ function ObraDetailsContent() {
                         >
                             Pagos
                         </button>
+                        <button
+                            onClick={() => setActiveTab('avances')}
+                            className={`${activeTab === 'avances'
+                                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                        >
+                            Avances
+                        </button>
                     </nav>
                 </div>
             )}
@@ -544,7 +576,7 @@ function ObraDetailsContent() {
 
 
                 </div>
-            ) : (
+            ) : activeTab === 'pagos' ? (
                 /* Payment Tab Content */
                 <PaymentList
                     payments={payments}
@@ -564,6 +596,24 @@ function ObraDetailsContent() {
                     handleCancelEditPayment={handleCancelEditPayment}
                     handleDeletePayment={handleDeletePayment}
                 />
+            ) : (
+                /* Avances Tab Content */
+                <div className="space-y-6">
+                    {user.rol !== 'Cliente' && (
+                        <AvanceUploadForm
+                            obraId={id}
+                            rubros={rubros}
+                            onUploadSuccess={fetchAvances}
+                        />
+                    )}
+                    {avancesLoading ? (
+                        <div className="text-center py-10">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
+                        </div>
+                    ) : (
+                        <AvanceList groupedAvances={avances} />
+                    )}
+                </div>
             )}
 
             {/* Modals */}

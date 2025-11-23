@@ -65,6 +65,7 @@ app.use('/api/presupuestos', require('./src/routes/presupuestoRoutes')); // Mont
 app.use('/api/presupuestos', require('./src/routes/rubroRoutes')); // Montaje para /:presupuestoId/rubros
 app.use('/api/rubros', require('./src/routes/rubroRoutes')); // Montaje para /:rubroId/avance
 app.use('/api/obras', require('./src/routes/paymentRoutes')); // Montaje para /:projectId/pagos
+app.use('/api/obras', require('./src/routes/avanceRoutes')); // Montaje para /:obraId/avances
 
 
 // Middleware de manejo de errores (siempre al final de las rutas)
