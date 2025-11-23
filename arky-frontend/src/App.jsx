@@ -10,11 +10,14 @@ import CreateObra from './pages/CreateObra';
 import ObraDetails from './pages/ObraDetails';
 import { ToastProvider } from './context/ToastContext';
 
+import LandingPage from './pages/LandingPage';
+
 export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -42,7 +45,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
         </Routes>
       </ToastProvider>
     </AuthProvider>
