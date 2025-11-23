@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import MainLayout from '../components/layouts/MainLayout';
 import clsx from 'clsx';
+import Button from '../components/ui/Button';
+import { Plus, UserPlus } from 'lucide-react';
+import RegisterClientModal from '../components/dashboard/RegisterClientModal';
+
+import AdminDashboard from './AdminDashboard';
 
 // Helper para badges de estado
 const getStatusBadge = (status) => {
@@ -27,23 +32,27 @@ const getStatusBadge = (status) => {
 };
 
 export default function Dashboard() {
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const [obras, setObras] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('Todos');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [isRegisterClientOpen, setIsRegisterClientOpen] = useState(false);
     const navigate = useNavigate();
 
     if (!user) return null;
+
+    // Redirect Admin to AdminDashboard
+    if (user.rol === 'Admin') {
+        return <AdminDashboard />;
+    }
 
     useEffect(() => {
         const fetchObras = async () => {
             setLoading(true);
             try {
                 const response = await api.get('/obras');
-                // The API returns { status: 'success', data: [...] }
-                // We need to access response.data.data to get the array of obras
                 setObras(response.data.data || []);
             } catch (error) {
                 console.error("Error fetching obras:", error);
@@ -74,15 +83,28 @@ export default function Dashboard() {
                     <h2 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
                         Mis Obras
                     </h2>
+                    <p className="mt-2 text-gray-600 dark:text-gray-400">
+                        Bienvenido, {user?.nombre}
+                    </p>
                 </div>
-                <div className="mt-4 flex md:mt-0 md:ml-4">
-                    {(user.rol === 'Arquitecto' || user.rol === 'Encargado') && (
-                        <button
-                            onClick={() => navigate('/create-obra')}
-                            className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                <div className="mt-4 flex md:mt-0 md:ml-4 space-x-4">
+                    {user?.rol === 'Arquitecto' && (
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsRegisterClientOpen(true)}
+                            className="flex items-center"
                         >
-                            Nueva Obra
-                        </button>
+                            <UserPlus className="h-5 w-5 mr-2" />
+                            Registrar Cliente
+                        </Button>
+                    )}
+                    {(user.rol === 'Arquitecto' || user.rol === 'Encargado') && (
+                        <Link to="/create-obra">
+                            <Button className="flex items-center">
+                                <Plus className="h-5 w-5 mr-2" />
+                                Nueva Obra
+                            </Button>
+                        </Link>
                     )}
                 </div>
             </div>
@@ -255,17 +277,22 @@ export default function Dashboard() {
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Comienza creando una nueva obra.</p>
                     {(user.rol === 'Arquitecto' || user.rol === 'Encargado') && (
                         <div className="mt-6">
-                            <button
-                                onClick={() => navigate('/create-obra')}
-                                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                Crear Obra
-                            </button>
+                            <Link to="/create-obra">
+                                <Button className="inline-flex items-center">
+                                    <Plus className="h-5 w-5 mr-2" />
+                                    Crear Obra
+                                </Button>
+                            </Link>
                         </div>
                     )}
                 </div>
             )}
+
+            <RegisterClientModal
+                isOpen={isRegisterClientOpen}
+                onClose={() => setIsRegisterClientOpen(false)}
+                token={token}
+            />
         </MainLayout>
     );
 }
-

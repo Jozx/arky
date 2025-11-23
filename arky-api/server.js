@@ -1,24 +1,29 @@
-// arky-api/server.js
 const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
 
 // 1. Configuración de dotenv para cargar variables de entorno (DEBE SER LO PRIMERO)
-dotenv.config();
+const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env.local';
+dotenv.config({ path: path.resolve(__dirname, envFile) });
+
+// Fallback: si no existe .env.local, intentar cargar .env (para compatibilidad)
+if (process.env.NODE_ENV !== 'production' && !process.env.PG_USER && !process.env.DATABASE_URL) {
+    dotenv.config(); // Carga .env por defecto
+}
+
+console.log(`🔧 Cargando configuración de: ${envFile}`);
 
 // 2. Importar módulos que dependen de process.env
 const errorHandler = require('./src/middleware/errorHandler');
 const connectDB = require('./src/config/db');
 
 // Conexión a la base de datos
-console.log('DEBUG: PG_PASSWORD leído:', process.env.PG_PASSWORD); // Solo para verificar por última vez
 connectDB();
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// -------------------------------------------------------------
 // 📌 CONFIGURACIÓN DE CORS
 // -------------------------------------------------------------
 const allowedOrigins = [

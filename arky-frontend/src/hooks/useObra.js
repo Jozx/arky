@@ -21,16 +21,18 @@ export default function useObra(id) {
             try {
                 const presRes = await api.get(`/obras/${id}/presupuestos/latest`);
                 const presData = presRes.data.data;
-                setPresupuesto(presData.presupuesto);
-                setRubros(presData.rubros);
-            } catch (presErr) {
-                // It's possible there is no budget yet, which is fine
-                if (presErr.response && presErr.response.status === 404) {
+
+                if (presData) {
+                    setPresupuesto(presData.presupuesto);
+                    setRubros(presData.rubros);
+                } else {
                     setPresupuesto(null);
                     setRubros([]);
-                } else {
-                    throw presErr;
                 }
+            } catch (presErr) {
+                console.error("Error fetching presupuesto:", presErr);
+                // If it's a real error (not 404), we might want to show it, 
+                // but for now we just log it as the UI handles "no budget" state via null check
             }
         } catch (err) {
             console.error("Error fetching obra data:", err);

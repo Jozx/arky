@@ -1,0 +1,19 @@
+require('dotenv').config({ path: '.env.local' });
+const db = require('./src/config/db');
+
+async function checkColumns() {
+    try {
+        const res = await db.query(`
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'User';
+        `);
+        console.log(res.rows.map(r => `${r.column_name} (${r.data_type})`));
+    } catch (err) {
+        console.error(err);
+    } finally {
+        process.exit();
+    }
+}
+
+checkColumns();

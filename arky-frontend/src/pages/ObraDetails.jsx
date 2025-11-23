@@ -419,7 +419,10 @@ function ObraDetailsContent() {
                                     </div>
                                     <div className="sm:col-span-1">
                                         <select
-                                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2 border"
+                                            className={clsx(
+                                                "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md p-2 border",
+                                                newRubro.unidad_medida === "" ? "text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-white"
+                                            )}
                                             value={newRubro.unidad_medida}
                                             onChange={e => setNewRubro({ ...newRubro, unidad_medida: e.target.value })}
                                             required

@@ -41,7 +41,7 @@ class PresupuestoService {
         const latestPresupuestoHeader = await presupuestoModel.findLatestByObraId(obraId);
 
         if (!latestPresupuestoHeader) {
-            throw new AppError('No se encontró ningún presupuesto para esta obra.', 404);
+            return null;
         }
 
         const presupuestoCompleto = await presupuestoModel.findWithRubros(latestPresupuestoHeader.id);

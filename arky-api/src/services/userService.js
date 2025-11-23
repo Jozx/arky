@@ -48,13 +48,18 @@ async function loginUser(email, password) {
         throw new AppError('Credenciales inválidas.', 401);
     }
 
-    // 2. Comparar contraseñas
+    // 2. Verificar si el usuario está activo
+    if (user.is_active === false) {
+        throw new AppError('Su cuenta ha sido desactivada. Contacte al administrador.', 403);
+    }
+
+    // 3. Comparar contraseñas
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
         throw new AppError('Credenciales inválidas.', 401);
     }
 
-    // 3. Generar token
+    // 4. Generar token
     const token = jwt.sign(
         { id: user.id, rol: user.rol },
         JWT_SECRET,
@@ -74,8 +79,32 @@ async function getUsersByRole(rol) {
     return await userModel.findByRole(rol);
 }
 
+/**
+ * Obtiene todos los usuarios (Admin).
+ */
+async function getAllUsers() {
+    return await userModel.findAll();
+}
+
+/**
+ * Actualiza datos de un usuario.
+ */
+async function updateUser(id, nombre, email) {
+    return await userModel.update(id, nombre, email);
+}
+
+/**
+ * Cambia el estado (activo/inactivo) de un usuario.
+ */
+async function toggleUserStatus(id, isActive) {
+    return await userModel.updateStatus(id, isActive);
+}
+
 module.exports = {
     registerUser,
     loginUser,
     getUsersByRole,
+    getAllUsers,
+    updateUser,
+    toggleUserStatus,
 };

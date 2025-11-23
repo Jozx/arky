@@ -10,21 +10,17 @@ export default function ThemeToggle() {
     });
 
     useEffect(() => {
-        const root = document.documentElement;
-        console.log('ThemeToggle: Effect running. Theme:', theme);
+        const root = window.document.documentElement;
         if (theme === 'dark') {
             root.classList.add('dark');
-            console.log('ThemeToggle: Added dark class');
         } else {
             root.classList.remove('dark');
-            console.log('ThemeToggle: Removed dark class');
         }
         localStorage.setItem('theme', theme);
     }, [theme]);
 
     const toggleTheme = () => {
-        console.log('ThemeToggle: Toggling theme from', theme);
-        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
     };
 
     return (
