@@ -29,7 +29,9 @@ const port = process.env.PORT || 3001;
 const allowedOrigins = [
     'http://localhost:3000', // React / Frontend
     'http://localhost:5173', // Vite / Frontend
-];
+    process.env.FRONTEND_URL, // Production Frontend
+    process.env.BACKEND_URL,  // Production Backend
+].filter(Boolean); // Remove undefined values
 
 const corsOptions = {
     origin: function (origin, callback) {
