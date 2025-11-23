@@ -1,53 +1,18 @@
-# Dependencies
-node_modules/
-package-lock.json
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.prod
-
-# Build outputs
-arky-frontend/dist/
-arky-frontend/build/
-arky-api/dist/
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Temporary files
-*.tmp
-*.temp
-fix_obra_details.js
-OBRA_DETAILS_FIX_GUIDE.md
-run_migration.bat
-run_migration.js
-check_enum.sql
-arky-api/verify_workflow.js
-
-# Tests
+# Test directories
 tests/
 
-# Test coverage
-coverage/
-.nyc_output/
-PAYMENT_TAB_INTEGRATION_GUIDE.md
-arky-api/uploads/6-1763909625123.jpg
+# Temporary documentation (created during debugging)
+*_GUIDE.md
+*_SETUP.md
+*_INCIDENT.md
+*_SUMMARY.md
+*_PLAN.md
+
+# Cleanup scripts (one-time use)
+cleanup.ps1
+cleanup.sh
+
+# Keep only essential docs
+!README.md
+!CONTRIBUTING.md
+!LICENSE.md

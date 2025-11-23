@@ -1,0 +1,45 @@
+# Environment variables
+.env
+.env.local
+.env.prod
+.env.production
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Temporary files
+*.txt
+admin_sql.txt
+migration_log.txt
+schema_*.txt
+verify_*.txt
+
+# Test/Debug scripts (one-time use)
+*_production.js
+generate_*.js
+verify_*.js
+test_*.js
+check_*.js
+
+# Dependencies
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/
+temp/
