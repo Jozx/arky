@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import AuthLayout from '../components/layouts/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import axios from 'axios';
+import api from '../services/api';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
@@ -18,7 +18,7 @@ export default function ForgotPassword() {
         setIsLoading(true);
 
         try {
-            const response = await axios.post('http://localhost:3001/api/users/forgot-password', { email });
+            const response = await api.post('/users/forgot-password', { email });
             setMessage(response.data.message);
         } catch (err) {
             setError(err.response?.data?.message || 'Error al solicitar el reseteo.');

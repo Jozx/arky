@@ -6,7 +6,7 @@ import { UserPlus } from 'lucide-react';
 import UserList from '../components/admin/UserList';
 import RegisterArchitectModal from '../components/admin/RegisterArchitectModal';
 import EditUserModal from '../components/admin/EditUserModal';
-import axios from 'axios';
+import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 
 export default function AdminDashboard() {
@@ -19,9 +19,7 @@ export default function AdminDashboard() {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('http://localhost:3001/api/users/admin/users', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/users/admin/users');
             setUsers(response.data.data);
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -37,10 +35,9 @@ export default function AdminDashboard() {
 
     const handleToggleStatus = async (userToToggle) => {
         try {
-            await axios.patch(
-                `http://localhost:3001/api/users/admin/users/${userToToggle.id}/status`,
-                { is_active: !userToToggle.is_active },
-                { headers: { Authorization: `Bearer ${token}` } }
+            await api.patch(
+                `/users/admin/users/${userToToggle.id}/status`,
+                { is_active: !userToToggle.is_active }
             );
             showToast(`Usuario ${userToToggle.is_active ? 'deshabilitado' : 'habilitado'} correctamente`, 'success');
             fetchUsers();

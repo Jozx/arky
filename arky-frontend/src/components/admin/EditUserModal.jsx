@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import axios from 'axios';
+import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 
 export default function EditUserModal({ isOpen, onClose, user, token, onSuccess }) {
@@ -28,10 +28,9 @@ export default function EditUserModal({ isOpen, onClose, user, token, onSuccess 
         setIsLoading(true);
 
         try {
-            await axios.patch(
-                `http://localhost:3001/api/users/admin/users/${user.id}`,
-                formData,
-                { headers: { Authorization: `Bearer ${token}` } }
+            await api.patch(
+                `/users/admin/users/${user.id}`,
+                formData
             );
 
             showToast('Usuario actualizado exitosamente', 'success');

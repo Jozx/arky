@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layouts/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import axios from 'axios';
+import api from '../services/api';
 
 export default function ResetPassword() {
     const { token } = useParams();
@@ -27,7 +27,7 @@ export default function ResetPassword() {
         setIsLoading(true);
 
         try {
-            const response = await axios.patch(`http://localhost:3001/api/users/reset-password/${token}`, { password });
+            const response = await api.patch(`/users/reset-password/${token}`, { password });
             setMessage(response.data.message);
             setTimeout(() => navigate('/login'), 3000);
         } catch (err) {

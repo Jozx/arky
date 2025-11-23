@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import axios from 'axios';
+import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 
 export default function RegisterClientModal({ isOpen, onClose, token }) {
@@ -22,10 +22,9 @@ export default function RegisterClientModal({ isOpen, onClose, token }) {
         setTempPassword('');
 
         try {
-            const response = await axios.post(
-                'http://localhost:3001/api/users/architect/register-client',
-                formData,
-                { headers: { Authorization: `Bearer ${token}` } }
+            const response = await api.post(
+                '/users/architect/register-client',
+                formData
             );
 
             setTempPassword(response.data.data.tempPassword);
