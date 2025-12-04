@@ -17,6 +17,7 @@ console.log(`🔧 Cargando configuración de: ${envFile}`);
 // 2. Importar módulos que dependen de process.env
 const errorHandler = require('./src/middleware/errorHandler');
 const connectDB = require('./src/config/db');
+const idempotencyMiddleware = require('./src/middleware/idempotencyMiddleware');
 
 // Conexión a la base de datos
 connectDB();
@@ -48,6 +49,7 @@ const corsOptions = {
 };
 
 // Usar el middleware CORS con las opciones configuradas
+// Usar el middleware CORS con las opciones configuradas
 app.use(cors(corsOptions));
 
 // Middlewares estándar de Express
@@ -57,6 +59,9 @@ app.use(express.urlencoded({ extended: false }));
 // Middleware para servir archivos estáticos (uploads)
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(UPLOAD_DIR));
+
+// Idempotency Middleware
+app.use(idempotencyMiddleware);
 
 // Rutas
 app.use('/api/users', require('./src/routes/userRoutes'));

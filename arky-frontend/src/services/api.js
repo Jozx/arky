@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
@@ -14,6 +15,12 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Agregar Idempotency-Key para métodos mutantes
+        if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
+            config.headers['Idempotency-Key'] = uuidv4();
+        }
+
         return config;
     },
     (error) => {
