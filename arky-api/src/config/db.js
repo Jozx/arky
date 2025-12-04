@@ -24,17 +24,24 @@ if (process.env.DATABASE_URL) {
 
 const pool = new Pool(poolConfig);
 
+pool.on('error', (err, client) => {
+  console.error('❌ Error inesperado en el pool de PostgreSQL:', err);
+});
+
 /**
  * Función para probar la conexión a la base de datos.
  */
 const connectDB = async () => {
+  let client;
   try {
-    await pool.connect();
+    client = await pool.connect();
     console.log('✅ Conexión exitosa a PostgreSQL');
   } catch (error) {
     console.error('❌ Error al conectar con PostgreSQL:', error.message);
     // Si la conexión falla al inicio, terminamos el proceso
     process.exit(1);
+  } finally {
+    if (client) client.release();
   }
 };
 
